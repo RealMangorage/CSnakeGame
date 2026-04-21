@@ -25,11 +25,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
-    AllocConsole();
-    freopen("CONOUT$", "w", stdout);
+//    AllocConsole();
+//    freopen("CONOUT$", "w", stdout);
 
     // Register the window class.
-    const wchar_t CLASS_NAME[]  = L"Sample Window Class";
+    const wchar_t CLASS_NAME[]  = L"Snake Game";
 
     WNDCLASS wc = { };
 
@@ -51,7 +51,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     HWND hwnd = CreateWindowEx(
             0,
             CLASS_NAME,
-            L"Learn to Program Windows",
+            L"Snake Game",
             WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
             CW_USEDEFAULT, CW_USEDEFAULT,
             dimensions.width, dimensions.height,   // <-- width, height
@@ -83,11 +83,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    switch (uMsg)
-    {
+    switch (uMsg) {
         case WM_DESTROY:
+        {
             PostQuitMessage(0);
             return 0;
+        }
+        case WM_CLOSE:
+        {
+            exit(0);
+        }
         case WM_SETCURSOR:
         {
             SetCursor(LoadCursor(NULL, IDC_ARROW));
@@ -121,8 +126,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
             return 0;
         }
-        case WM_KEYUP:
+        case WM_KEYUP: {
             return 0;
+        }
         case WM_TIMER:
         {
             update();
@@ -142,7 +148,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
             EndPaint(hwnd, &ps);
         }
-            return 0;
+        return 0;
 
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
