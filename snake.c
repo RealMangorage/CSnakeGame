@@ -31,6 +31,8 @@ Direction direction = RIGHT;
 Snake gameSnake;
 Point gameApple;
 
+RECT drawingRect;
+
 // ----------------------- STATE DATA END ----------------------- //
 
 
@@ -44,6 +46,13 @@ RECT Snake_NewGridRect(int gx, int gy, int tSize)
             (gx + 1) * tSize,
             (gy + 1) * tSize
     };
+}
+
+void Snake_UpdateGridRect(RECT* rect, int gx, int gy, int tSize) {
+    rect->left = gx * tSize;
+    rect->top = gy * tSize;
+    rect->right = (gx + 1) * tSize;
+    rect->bottom = (gy + 1) * tSize;
 }
 
 int Snake_isOutOfBounds() {
@@ -175,6 +184,7 @@ void Snake_Init() {
     headBrush = CreateSolidBrush(RGB(255, 0, 0));
     segmentBrush = CreateSolidBrush(RGB(0, 255, 0));
     appleBrush = CreateSolidBrush(RGB(0,0, 255));
+    drawingRect = Snake_NewGridRect(0, 0, size);
 }
 
 void Snake_SetDirection(Direction newDirection) {
@@ -218,15 +228,17 @@ void Snake_Render(HDC hdc) {
     boolean head = FALSE;
 
     for (int i = 0; i < gameSnake.length; i++) {
-        RECT segmentRect = Snake_NewGridRect(gameSnake.segments[i].x, gameSnake.segments[i].y, size);
-        FillRect(hdc, &segmentRect, head ? headBrush : segmentBrush);
+
+
+        Snake_UpdateGridRect(&drawingRect, gameSnake.segments[i].x, gameSnake.segments[i].y, size);
+        FillRect(hdc, &drawingRect, head ? headBrush : segmentBrush);
 
         if (head == FALSE)
             head = TRUE;
     }
 
-    RECT appleRect = Snake_NewGridRect(gameApple.x, gameApple.y, size);
-    FillRect(hdc, &appleRect, appleBrush);
+    Snake_UpdateGridRect(&drawingRect,gameApple.x, gameApple.y, size);
+    FillRect(hdc, &drawingRect, appleBrush);
 }
 
 void Snake_Dispose() {
