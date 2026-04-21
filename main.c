@@ -52,7 +52,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     Snake_SetSize(size);
     Snake_SetDimensions(dimensions.width, dimensions.height);
     Snake_Init();
-    Snake_Reset();
 
     HWND hwnd = CreateWindowEx(
             0,
@@ -74,10 +73,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     }
 
     ShowWindow(hwnd, nCmdShow);
-    SetTimer(hwnd, 1, 1/60, updateCycle); // 16ms per tick
+    SetTimer(hwnd, 1, 16, updateCycle); // 16ms per tick
 
     MSG msg = {};
-    while (GetMessage(&msg, NULL, 0, 0) > 0)
+    while (GetMessage(&msg, hwnd, 0, 0) > 0)
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
@@ -114,45 +113,40 @@ void handleKeyEvent(WPARAM wParam, int keyDown) {
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    switch (uMsg) {
+    switch (uMsg)
+    {
         case WM_DESTROY:
-        {
+            KillTimer(hwnd, 1);        // FIX: stop timer
+            Snake_Dispose();
             PostQuitMessage(0);
             return 0;
-        }
+
         case WM_CLOSE:
-        {
-            Snake_Dispose();
-            exit(0);
-        }
+            DestroyWindow(hwnd);       // FIX: proper shutdown path
+            return 0;
+
         case WM_SETCURSOR:
-        {
             SetCursor(LoadCursor(NULL, IDC_ARROW));
             return TRUE;
-        }
+
         case WM_KEYDOWN:
-        {
             handleKeyEvent(wParam, 1);
             return 0;
-        }
-        case WM_KEYUP:
-        {
-            return 0;
-        }
+
+        case WM_ERASEBKGND:
+            return 1; // FIX: prevents flicker
+
         case WM_PAINT:
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hwnd, &ps);
 
-            // All painting occurs here, between BeginPaint and EndPaint.
-
-            FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
+            FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
             Snake_Render(hdc);
 
             EndPaint(hwnd, &ps);
+            return 0;
         }
-        return 0;
-
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
