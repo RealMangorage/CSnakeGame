@@ -11,6 +11,9 @@ typedef struct {
     int height;
 } Size;
 
+HBRUSH background;
+PAINTSTRUCT ps;
+
 Size getOptimalSize(int maxWidth, int maxHeight, int tileSize)
 {
     Size result;
@@ -72,6 +75,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         return 0;
     }
 
+    background = CreateSolidBrush(RGB(128, 128, 128));
+
     ShowWindow(hwnd, nCmdShow);
     SetTimer(hwnd, 1, 16, updateCycle); // 16ms per tick
 
@@ -85,6 +90,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     return 0;
 }
 
+
+void Main_Dispose() {
+    Snake_Dispose();
+    DeleteObject(background);
+    DeleteObject(&ps);
+}
 
 void handleKeyEvent(WPARAM wParam, int keyDown) {
     switch (wParam)
@@ -106,7 +117,7 @@ void handleKeyEvent(WPARAM wParam, int keyDown) {
             break;
 
         case VK_ESCAPE:
-            Snake_Dispose();
+            Main_Dispose();
             exit(0);
     }
 }
@@ -117,7 +128,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         case WM_DESTROY:
             KillTimer(hwnd, 1);        // FIX: stop timer
-            Snake_Dispose();
+            Main_Dispose();
             PostQuitMessage(0);
             return 0;
 
@@ -138,15 +149,16 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_PAINT:
         {
-            PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hwnd, &ps);
 
-            FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+            FillRect(hdc, &ps.rcPaint, background);
+
             Snake_Render(hdc);
 
             EndPaint(hwnd, &ps);
             return 0;
         }
     }
+
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
