@@ -9,16 +9,16 @@ typedef enum {
 } Direction;
 
 
-void setDimensions(int width, int height);
-void setSize(int size);
-void init();
-void dispose();
+void Snake_SetDimensions(int width, int height);
+void Snake_SetSize(int size);
+void Snake_Init();
+void Snake_Dispose();
 
-void setDirection(Direction direction);
+void Snake_SetDirection(Direction newDirection);
 
-void resetSnake();
+void Snake_Reset();
 
-void update(HWND hwnd);
-void render(HDC hdc);
+void Snake_Main_Update(HWND hwnd);
+void Snake_Render(HDC hdc);
 
 #endif

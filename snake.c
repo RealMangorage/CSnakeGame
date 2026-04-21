@@ -36,7 +36,7 @@ Point gameApple;
 
 
 // ----------------------- PRIVATE FUNCS START ----------------------- //
-RECT GridRect(int gx, int gy, int tSize)
+RECT Snake_NewGridRect(int gx, int gy, int tSize)
 {
     return (RECT) {
             gx * tSize,
@@ -46,7 +46,7 @@ RECT GridRect(int gx, int gy, int tSize)
     };
 }
 
-int isOutOfBounds() {
+int Snake_isOutOfBounds() {
     // Calculate the number of cells available in the grid
     int maxGridX = width / size;
     int maxGridY = height / size;
@@ -58,16 +58,16 @@ int isOutOfBounds() {
     return 0;
 }
 
-int isEqualPoints(Point p1, Point p2) {
+int Snake_isPointsEqual(Point p1, Point p2) {
     return (p1.x == p2.x && p1.y == p2.y);
 }
 
-int isIntersecting(Snake* snake) {
+int Snake_isIntersecting(Snake* snake) {
     if (!snake || snake->length < 2) return 0;
 
     Point head = snake->segments[0];
     for (int i = 1; i < snake->length; i++) {
-        if (isEqualPoints(head, snake->segments[i]))
+        if (Snake_isPointsEqual(head, snake->segments[i]))
             return 1;
     }
 
@@ -111,7 +111,7 @@ void Snake_Update(Snake* s, Direction dir, int grow) {
 
 }
 
-Point GenerateApple() {
+Point Snake_GenerateApple() {
     Point apple;
     int maxGridX = (width / size) - 1;
     int maxGridY = (height / size) - 1;
@@ -135,7 +135,7 @@ Point GenerateApple() {
     return apple;
 }
 
-void updateTitle(HWND hwnd) {
+void Snake_UpdateTitle(HWND hwnd) {
     char title[64];
     int score = (gameSnake.length - 4) * 10;
     sprintf(title, "Snake Game - Score: %d", score);
@@ -146,7 +146,7 @@ void updateTitle(HWND hwnd) {
 
 
 // ----------------------- API FUNCS START ----------------------- //
-void resetSnake() {
+void Snake_Reset() {
     if (gameSnake.segments != NULL) {
         free(gameSnake.segments);
     }
@@ -159,25 +159,25 @@ void resetSnake() {
     gameSnake.segments[2] = (Point){11, 10};
     gameSnake.segments[3] = (Point){10, 10};
     direction = RIGHT;
-    gameApple = GenerateApple();
+    gameApple = Snake_GenerateApple();
 }
 
-void setDimensions(int newWidth, int newHeight) {
+void Snake_SetDimensions(int newWidth, int newHeight) {
     width = newWidth;
     height = newHeight;
 }
 
-void setSize(int newSize) {
+void Snake_SetSize(int newSize) {
     size = newSize;
 }
 
-void init() {
+void Snake_Init() {
     headBrush = CreateSolidBrush(RGB(255, 0, 0));
     segmentBrush = CreateSolidBrush(RGB(0, 255, 0));
     appleBrush = CreateSolidBrush(RGB(0,0, 255));
 }
 
-void setDirection(Direction newDirection) {
+void Snake_SetDirection(Direction newDirection) {
     if (direction == LEFT && newDirection == RIGHT) return;
     if (direction == RIGHT && newDirection == LEFT) return;
     if (direction == UP && newDirection == DOWN) return;
@@ -185,28 +185,28 @@ void setDirection(Direction newDirection) {
     direction = newDirection;
 }
 
-void update(HWND hwnd) {
+void Snake_Main_Update(HWND hwnd) {
     ticks++;
     if (ticks % 5 == 0) {
 
-        if (isOutOfBounds()) {
+        if (Snake_isOutOfBounds()) {
             printf("Game Over! Hit a wall at %d, %d\n", gameSnake.segments[0].x, gameSnake.segments[0].y);
-            resetSnake();
-            updateTitle(hwnd);
+            Snake_Reset();
+            Snake_UpdateTitle(hwnd);
             return;
         }
 
-        if (isIntersecting(&gameSnake)) {
+        if (Snake_isIntersecting(&gameSnake)) {
             printf("Game Over! Ran into self at %d, %d\n", gameSnake.segments[0].x, gameSnake.segments[0].y);
-            resetSnake();
-            updateTitle(hwnd);
+            Snake_Reset();
+            Snake_UpdateTitle(hwnd);
             return;
         }
 
-        if (isEqualPoints(gameSnake.segments[0], gameApple)) {
-            gameApple = GenerateApple();
+        if (Snake_isPointsEqual(gameSnake.segments[0], gameApple)) {
+            gameApple = Snake_GenerateApple();
             Snake_Update(&gameSnake, direction, 1);
-            updateTitle(hwnd);
+            Snake_UpdateTitle(hwnd);
         } else {
             Snake_Update(&gameSnake, direction, 0);
         }
@@ -214,22 +214,22 @@ void update(HWND hwnd) {
     }
 }
 
-void render(HDC hdc) {
+void Snake_Render(HDC hdc) {
     boolean head = FALSE;
 
     for (int i = 0; i < gameSnake.length; i++) {
-        RECT segmentRect = GridRect(gameSnake.segments[i].x, gameSnake.segments[i].y, size);
+        RECT segmentRect = Snake_NewGridRect(gameSnake.segments[i].x, gameSnake.segments[i].y, size);
         FillRect(hdc, &segmentRect, head ? headBrush : segmentBrush);
 
         if (head == FALSE)
             head = TRUE;
     }
 
-    RECT appleRect =  GridRect(gameApple.x, gameApple.y, size);
+    RECT appleRect = Snake_NewGridRect(gameApple.x, gameApple.y, size);
     FillRect(hdc, &appleRect, appleBrush);
 }
 
-void dispose() {
+void Snake_Dispose() {
     DeleteObject(headBrush);
     DeleteObject(segmentBrush);
     DeleteObject(appleBrush);

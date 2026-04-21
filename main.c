@@ -22,7 +22,7 @@ Size getOptimalSize(int maxWidth, int maxHeight, int tileSize)
 }
 
 void updateCycle(HWND hwnd, UINT msg, UINT_PTR id, DWORD time) {
-    update(hwnd);
+    Snake_Main_Update(hwnd);
     InvalidateRect(hwnd, NULL, TRUE);  // request redraw
 }
 
@@ -49,10 +49,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     int size = 20;
     Size dimensions = getOptimalSize(800, 600, size);
 
-    setSize(size);
-    setDimensions(dimensions.width, dimensions.height);
-    init();
-    resetSnake();
+    Snake_SetSize(size);
+    Snake_SetDimensions(dimensions.width, dimensions.height);
+    Snake_Init();
+    Snake_Reset();
 
     HWND hwnd = CreateWindowEx(
             0,
@@ -91,23 +91,23 @@ void handleKeyEvent(WPARAM wParam, int keyDown) {
     switch (wParam)
     {
         case VK_UP:
-            setDirection(UP);
+            Snake_SetDirection(UP);
             break;
 
         case VK_DOWN:
-            setDirection(DOWN);
+            Snake_SetDirection(DOWN);
             break;
 
         case VK_LEFT:
-            setDirection(LEFT);
+            Snake_SetDirection(LEFT);
             break;
 
         case VK_RIGHT:
-            setDirection(RIGHT);
+            Snake_SetDirection(RIGHT);
             break;
 
         case VK_ESCAPE:
-            dispose();
+            Snake_Dispose();
             exit(0);
     }
 }
@@ -122,7 +122,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
         case WM_CLOSE:
         {
-            dispose();
+            Snake_Dispose();
             exit(0);
         }
         case WM_SETCURSOR:
@@ -147,7 +147,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             // All painting occurs here, between BeginPaint and EndPaint.
 
             FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
-            render(hdc);
+            Snake_Render(hdc);
 
             EndPaint(hwnd, &ps);
         }
