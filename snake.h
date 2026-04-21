@@ -11,13 +11,14 @@ typedef enum {
 
 void setDimensions(int width, int height);
 void setSize(int size);
+void init();
+void dispose();
 
 void setDirection(Direction direction);
 
 void resetSnake();
-void grow(); // Debug
 
-void update();
+void update(HWND hwnd);
 void render(HDC hdc);
 
 #endif

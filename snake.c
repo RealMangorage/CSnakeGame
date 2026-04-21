@@ -15,6 +15,12 @@ typedef struct {
 // ----------------------- STRUCTS END ----------------------- //
 
 
+// ----------------------- RENDER STATE START ----------------------- //
+HBRUSH headBrush;
+HBRUSH segmentBrush;
+HBRUSH appleBrush;
+// ----------------------- RENDER STATE END ----------------------- //
+
 // ----------------------- STATE DATA START ----------------------- //
 int ticks = 0;
 int size = 0;
@@ -23,7 +29,7 @@ int width, height;
 Direction direction = RIGHT;
 
 Snake gameSnake;
-Point apple;
+Point gameApple;
 
 // ----------------------- STATE DATA END ----------------------- //
 
@@ -107,8 +113,8 @@ void Snake_Update(Snake* s, Direction dir, int grow) {
 
 Point GenerateApple() {
     Point apple;
-    int maxGridX = width / size;
-    int maxGridY = height / size;
+    int maxGridX = (width / size) - 1;
+    int maxGridY = (height / size) - 1;
     int overlapping;
 
     do {
@@ -129,6 +135,13 @@ Point GenerateApple() {
     return apple;
 }
 
+void updateTitle(HWND hwnd) {
+    char title[64];
+    int score = (gameSnake.length - 4) * 10;
+    sprintf(title, "Snake Game - Score: %d", score);
+    SetWindowTextA(hwnd, title);
+}
+
 // ----------------------- PRIVATE FUNCS END ----------------------- //
 
 
@@ -146,7 +159,7 @@ void resetSnake() {
     gameSnake.segments[2] = (Point){11, 10};
     gameSnake.segments[3] = (Point){10, 10};
     direction = RIGHT;
-    apple = GenerateApple();
+    gameApple = GenerateApple();
 }
 
 void setDimensions(int newWidth, int newHeight) {
@@ -158,6 +171,12 @@ void setSize(int newSize) {
     size = newSize;
 }
 
+void init() {
+    headBrush = CreateSolidBrush(RGB(255, 0, 0));
+    segmentBrush = CreateSolidBrush(RGB(0, 255, 0));
+    appleBrush = CreateSolidBrush(RGB(0,0, 255));
+}
+
 void setDirection(Direction newDirection) {
     if (direction == LEFT && newDirection == RIGHT) return;
     if (direction == RIGHT && newDirection == LEFT) return;
@@ -166,41 +185,36 @@ void setDirection(Direction newDirection) {
     direction = newDirection;
 }
 
-void grow() {
-    Snake_Update(&gameSnake, direction, 1);
-}
-
-void update() {
+void update(HWND hwnd) {
     ticks++;
     if (ticks % 5 == 0) {
-
-        Snake_Update(&gameSnake, direction, 0);
 
         if (isOutOfBounds()) {
             printf("Game Over! Hit a wall at %d, %d\n", gameSnake.segments[0].x, gameSnake.segments[0].y);
             resetSnake();
+            updateTitle(hwnd);
             return;
         }
 
         if (isIntersecting(&gameSnake)) {
             printf("Game Over! Ran into self at %d, %d\n", gameSnake.segments[0].x, gameSnake.segments[0].y);
             resetSnake();
+            updateTitle(hwnd);
             return;
         }
 
-        if (isEqualPoints(gameSnake.segments[0], apple)) {
-            apple = GenerateApple();
+        if (isEqualPoints(gameSnake.segments[0], gameApple)) {
+            gameApple = GenerateApple();
             Snake_Update(&gameSnake, direction, 1);
+            updateTitle(hwnd);
+        } else {
+            Snake_Update(&gameSnake, direction, 0);
         }
 
     }
 }
 
 void render(HDC hdc) {
-    HBRUSH headBrush = CreateSolidBrush(RGB(255, 0, 0));
-    HBRUSH segmentBrush = CreateSolidBrush(RGB(0, 255, 0));
-    HBRUSH appleBrush = CreateSolidBrush(RGB(0,0, 255));
-
     boolean head = FALSE;
 
     for (int i = 0; i < gameSnake.length; i++) {
@@ -211,11 +225,14 @@ void render(HDC hdc) {
             head = TRUE;
     }
 
-    RECT appleRect =  GridRect(apple.x, apple.y, size);
+    RECT appleRect =  GridRect(gameApple.x, gameApple.y, size);
     FillRect(hdc, &appleRect, appleBrush);
+}
 
+void dispose() {
     DeleteObject(headBrush);
     DeleteObject(segmentBrush);
+    DeleteObject(appleBrush);
 }
 
 // ----------------------- API FUNCS END ----------------------- //

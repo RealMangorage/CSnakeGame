@@ -21,6 +21,11 @@ Size getOptimalSize(int maxWidth, int maxHeight, int tileSize)
     return result;
 }
 
+void updateCycle(HWND hwnd, UINT msg, UINT_PTR id, DWORD time) {
+    update(hwnd);
+    InvalidateRect(hwnd, NULL, TRUE);  // request redraw
+}
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
@@ -46,12 +51,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     setSize(size);
     setDimensions(dimensions.width, dimensions.height);
+    init();
     resetSnake();
 
     HWND hwnd = CreateWindowEx(
             0,
             CLASS_NAME,
-            L"Snake Game",
+            L"Snake Game -> Score: 0",
             WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
             CW_USEDEFAULT, CW_USEDEFAULT,
             dimensions.width, dimensions.height,   // <-- width, height
@@ -68,10 +74,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     }
 
     ShowWindow(hwnd, nCmdShow);
+    SetTimer(hwnd, 1, 1/60, updateCycle); // 16ms per tick
 
-    SetTimer(hwnd, 1, 1/20, NULL); // 10ms per tick
-
-    MSG msg = { };
+    MSG msg = {};
     while (GetMessage(&msg, NULL, 0, 0) > 0)
     {
         TranslateMessage(&msg);
@@ -79,6 +84,32 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     }
 
     return 0;
+}
+
+
+void handleKeyEvent(WPARAM wParam, int keyDown) {
+    switch (wParam)
+    {
+        case VK_UP:
+            setDirection(UP);
+            break;
+
+        case VK_DOWN:
+            setDirection(DOWN);
+            break;
+
+        case VK_LEFT:
+            setDirection(LEFT);
+            break;
+
+        case VK_RIGHT:
+            setDirection(RIGHT);
+            break;
+
+        case VK_ESCAPE:
+            dispose();
+            exit(0);
+    }
 }
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -91,6 +122,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
         case WM_CLOSE:
         {
+            dispose();
             exit(0);
         }
         case WM_SETCURSOR:
@@ -100,42 +132,13 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
         case WM_KEYDOWN:
         {
-            switch (wParam)
-            {
-                case VK_UP:
-                    setDirection(UP);
-                    break;
-
-                case VK_DOWN:
-                    setDirection(DOWN);
-                    break;
-
-                case VK_LEFT:
-                    setDirection(LEFT);
-                    break;
-
-                case VK_RIGHT:
-                    setDirection(RIGHT);
-                    break;
-                case VK_F7:
-                    grow();
-                    break;
-
-                case VK_ESCAPE:
-                    exit(0);
-            }
+            handleKeyEvent(wParam, 1);
             return 0;
         }
-        case WM_KEYUP: {
-            return 0;
-        }
-        case WM_TIMER:
+        case WM_KEYUP:
         {
-            update();
-            InvalidateRect(hwnd, NULL, TRUE);  // request redraw
             return 0;
         }
-
         case WM_PAINT:
         {
             PAINTSTRUCT ps;
