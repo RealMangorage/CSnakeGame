@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 11)
 if(MINGW)
     add_link_options("-municode")
     add_compile_options("-municode")
+    add_link_options($<$<CONFIG:RELEASE>:-s>)
 endif()
 
 add_executable(
