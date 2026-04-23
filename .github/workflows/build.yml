@@ -29,6 +29,18 @@ jobs:
             libudev-dev libgles2-mesa-dev libwayland-dev libxkbcommon-dev \
             libasound2-dev libpulse-dev
 
+      # --- CACHING STEP ---
+      - name: Cache SDL3 Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/_deps
+            build/SDL3
+          # This key ensures that if you change CMakeLists.txt, the cache resets
+          key: ${{ runner.os }}-sdl3-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-sdl3-
+
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
@@ -41,11 +53,8 @@ jobs:
           mkdir -p release-files
           if [ "${{ runner.os }}" == "Windows" ]; then
             cp build/Release/CSnakeGame.exe release-files/
-            cp build/Release/SDL3.dll release-files/
-            # Use 7z on Windows as 'zip' is often missing from the path
             cd release-files && 7z a ../snake-game-windows.zip *
           else
-            # Linux binary is static (all-in-one)
             cp build/CSnakeGame release-files/
             cd release-files && zip -r ../snake-game-linux.zip .
           fi
