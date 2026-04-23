@@ -12,7 +12,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # Runs parallel builds for Windows and Linux
         os: [ubuntu-latest, windows-latest]
 
     steps:
@@ -30,18 +29,20 @@ jobs:
             libasound2-dev libpulse-dev
 
       - name: Configure CMake
-        # Creates the build directory and configures the project for Release
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build Project
-        # Compiles the project
         run: cmake --build build --config Release
 
       - name: Upload Build Artifacts
-        # This saves the .exe (Windows) or binary (Linux) so you can download it
         uses: actions/upload-artifact@v4
         with:
           name: snake-game-${{ matrix.os }}
           path: |
-            build/CSnakeGame*
-            build/*.dll
+            # Windows outputs
+            build/Release/CSnakeGame.exe
+            build/Release/SDL3.dll
+            # Linux outputs (Binary and Shared Object)
+            build/CSnakeGame
+            build/libSDL3.so*
+          if-no-files-found: ignore
