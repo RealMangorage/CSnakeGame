@@ -4,6 +4,9 @@ on:
   push:
     branches: [ "master" ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build on ${{ matrix.os }}
@@ -39,10 +42,11 @@ jobs:
           if [ "${{ runner.os }}" == "Windows" ]; then
             cp build/Release/CSnakeGame.exe release-files/
             cp build/Release/SDL3.dll release-files/
-            cd release-files && zip -r ../snake-game-windows.zip .
+            # Use 7z on Windows as 'zip' is often missing from the path
+            cd release-files && 7z a ../snake-game-windows.zip *
           else
+            # Linux binary is static (all-in-one)
             cp build/CSnakeGame release-files/
-            cp build/libSDL3.so* release-files/ || true
             cd release-files && zip -r ../snake-game-linux.zip .
           fi
 
