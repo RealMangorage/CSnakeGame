@@ -17,9 +17,9 @@ typedef struct {
 
 
 // ----------------------- DEBUG STATES START ----------------------- //
-int skipBorderCollisionChecks = 0;
-int skipSnakeCollisionChecks = 0;
-int alwaysUpdateTitle = 0;
+static int skipBorderCollisionChecks = 0;
+static int skipSnakeCollisionChecks  = 0;
+static int alwaysUpdateTitle         = 0;
 // ----------------------- DEBUG STATES END ----------------------- //
 
 
@@ -31,7 +31,7 @@ HBRUSH appleBrush;
 
 // ----------------------- STATE DATA START ----------------------- //
 int ticks = 0;
-int size = 0;
+int size  = 0;
 int width, height;
 
 Direction direction;
@@ -40,11 +40,28 @@ Snake gameSnake;
 Point gameApple;
 RECT drawingRect;
 
+Point start[] = {
+        {11, 10},
+        {12, 10},
+        {13, 10},
+        {14, 10}
+};
+
 // ----------------------- STATE DATA END ----------------------- //
 
 
-
 // ----------------------- PRIVATE FUNCS START ----------------------- //
+
+// Make Compiler stop complaining about unchanged values, these are for debug/dev
+void Snake_SetDebugOption(int option, int value) {
+    if (option == 1)
+        skipBorderCollisionChecks = value;
+    if (option == 2)
+        skipSnakeCollisionChecks = value;
+    if (option == 3)
+        alwaysUpdateTitle = value;
+}
+
 RECT Snake_NewGridRect(int gx, int gy, int tSize)
 {
     return (RECT) {
@@ -90,11 +107,12 @@ int Snake_isIntersecting(Snake* snake) {
     return 0;
 }
 
-void Snake_PushFront(Snake* s, Point p)
+void Snake_Push(Snake* s, Point newHead, int grow)
 {
+    // ensure capacity
     if (s->currentLength >= s->maxLength)
     {
-        int newCap = (s->maxLength == 0) ? 4 : s->maxLength * 2;
+        int newCap = s->maxLength + 10;
 
         Point* temp = realloc(s->segments, sizeof(Point) * newCap);
         if (!temp) return;
@@ -103,37 +121,39 @@ void Snake_PushFront(Snake* s, Point p)
         s->maxLength = newCap;
     }
 
-    if (s->currentLength > 0)
-    {
-        memmove(&s->segments[1],
-                &s->segments[0],
-                sizeof(Point) * s->currentLength);
-    }
+    // shift body right (makes space for head)
+    memmove(
+            s->segments + 1,
+            s->segments,
+            sizeof(Point) * s->currentLength
+    );
 
-    s->segments[0] = p;
+    // insert new head
+    s->segments[0] = newHead;
 
+    // snake always grows by 1 temporarily
     s->currentLength++;
-}
 
-void Snake_PopBack(Snake* s) {
-    if (s->currentLength > 0) {
+    if (!grow)
+    {
+        // remove tail logically
         s->currentLength--;
     }
 }
 
 void Snake_Update(Snake* s, Direction dir, int grow) {
-    Point newHead = s->segments[0];
+    Point newHead = {s->segments[0].x, s->segments[0].y};
 
     if (dir == UP)    newHead.y--;
     if (dir == DOWN)  newHead.y++;
     if (dir == LEFT)  newHead.x--;
     if (dir == RIGHT) newHead.x++;
 
-    Snake_PushFront(s, newHead);
+    Snake_Push(s, newHead, grow);
+}
 
-    if (!grow) {
-        Snake_PopBack(s);
-    }
+void Snake_Grow() {
+    Snake_Update(&gameSnake, direction, 1);
 }
 
 void Snake_GenerateApple() {
@@ -168,13 +188,14 @@ void Snake_UpdateTitle(HWND hwnd) {
 
 
 // ----------------------- API FUNCS START ----------------------- //
-void Snake_Reset() {
+void Snake_Reset()
+{
     gameSnake.currentLength = 0;
 
-    Snake_PushFront(&gameSnake, (Point){11, 10});
-    Snake_PushFront(&gameSnake, (Point){12, 10});
-    Snake_PushFront(&gameSnake, (Point){13, 10});
-    Snake_PushFront(&gameSnake, (Point){14, 10});
+    for (int i = 0; i < 4; i++)
+    {
+        Snake_Push(&gameSnake, start[i], 1);
+    }
 
     Snake_GenerateApple();
     direction = RIGHT;
@@ -197,7 +218,7 @@ void Snake_Init() {
 
     gameSnake.segments = malloc(sizeof(Point) * 10);
     gameSnake.currentLength = 0;
-    gameSnake.maxLength = 10;
+    gameSnake.maxLength = 1;
 
     Snake_Reset();
 }
@@ -245,15 +266,15 @@ void Snake_Main_Update(HWND hwnd) {
 }
 
 void Snake_Render(HDC hdc) {
-    boolean head = FALSE;
+    int head = 0;
 
     for (int i = 0; i < gameSnake.currentLength; i++) {
 
         Snake_UpdateGridRect(&drawingRect, gameSnake.segments[i].x, gameSnake.segments[i].y, size);
         FillRect(hdc, &drawingRect, head ? headBrush : segmentBrush);
 
-        if (head == FALSE)
-            head = TRUE;
+        if (!head)
+            head = 1;
     }
 
     Snake_UpdateGridRect(&drawingRect,gameApple.x, gameApple.y, size);

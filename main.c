@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include "snake.h"
 
+#define CHEAT FALSE
+
 typedef struct {
     int width;
     int height;
@@ -33,8 +35,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
-//    AllocConsole();
-//    freopen("CONOUT$", "w", stdout);
+    AllocConsole();
+    freopen("CONOUT$", "w", stdout);
 
     // Register the window class.
     const wchar_t CLASS_NAME[]  = L"Snake Game";
@@ -116,6 +118,11 @@ void handleKeyEvent(WPARAM wParam, int keyDown) {
             Snake_SetDirection(RIGHT);
             break;
 
+        case VK_F7:
+            if (CHEAT) {
+                Snake_Grow();
+            }
+            break;
         case VK_ESCAPE:
             Main_Dispose();
             exit(0);
