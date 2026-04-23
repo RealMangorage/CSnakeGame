@@ -25,15 +25,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential \
             libx11-dev libxcursor-dev libxinerama-dev libxrandr-dev \
-            libxi-dev libxss-dev libgl1-mesa-dev libdbus-1-dev \
-            libudev-dev libgles2-mesa-dev libwayland-dev libxkbcommon-dev
+            libxi-dev libxss-dev libxtst-dev libgl1-mesa-dev libdbus-1-dev \
+            libudev-dev libgles2-mesa-dev libwayland-dev libxkbcommon-dev \
+            libasound2-dev libpulse-dev
 
       - name: Configure CMake
-        # Creates the build directory and configures the project
+        # Creates the build directory and configures the project for Release
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build Project
-        # Compiles the project using the configuration generated above
+        # Compiles the project
         run: cmake --build build --config Release
 
       - name: Upload Build Artifacts
