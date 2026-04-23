@@ -6,14 +6,9 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 include(FetchContent)
 
-# Logic: Static for Linux (portability), Shared for Windows (standard)
-if(WIN32)
-    set(SDL_SHARED ON CACHE BOOL "" FORCE)
-    set(SDL_STATIC OFF CACHE BOOL "" FORCE)
-else()
-    set(SDL_SHARED OFF CACHE BOOL "" FORCE)
-    set(SDL_STATIC ON CACHE BOOL "" FORCE)
-endif()
+# Portable!
+set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+set(SDL_STATIC ON CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
         SDL3
