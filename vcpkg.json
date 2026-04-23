@@ -1,0 +1,5 @@
+{
+  "name": "csnakegame",
+  "version-string": "3.4.4",
+  "dependencies": [ "sdl3" ]
+}

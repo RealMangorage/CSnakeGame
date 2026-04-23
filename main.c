@@ -1,171 +1,73 @@
-#ifndef UNICODE
-#define UNICODE
-#endif
-
-#include <windows.h>
-#include <stdio.h>
+#include <SDL3/SDL.h>
 #include "snake.h"
 
-#define CHEAT FALSE
+// Constants based on your previous Win32 logic
+#define TILE_SIZE 20
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 600
 
-typedef struct {
-    int width;
-    int height;
-} Size;
+int main(int argc, char* argv[]) {
+    // 1. Initialize SDL
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
+        SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
+        return 1;
+    }
 
-HBRUSH background;
-PAINTSTRUCT ps;
+    // 2. Create Window & Renderer (Replaces CreateWindowEx)
+    SDL_Window* window = NULL;
+    SDL_Renderer* renderer = NULL;
 
-Size getOptimalSize(int maxWidth, int maxHeight, int tileSize)
-{
-    Size result;
+    if (!SDL_CreateWindowAndRenderer("Snake Game -> Score: 0",
+                                     SCREEN_WIDTH, SCREEN_HEIGHT,
+                                     0, &window, &renderer)) {
+        SDL_Log("Window/Renderer error: %s", SDL_GetError());
+        SDL_Quit();
+        return 1;
+    }
 
-    result.width  = (maxWidth  / tileSize) * tileSize;
-    result.height = (maxHeight / tileSize) * tileSize;
-
-    return result;
-}
-
-void updateCycle(HWND hwnd, UINT msg, UINT_PTR id, DWORD time) {
-    Snake_Main_Update(hwnd);
-    InvalidateRect(hwnd, NULL, TRUE);  // request redraw
-}
-
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
-{
-    AllocConsole();
-    freopen("CONOUT$", "w", stdout);
-
-    // Register the window class.
-    const wchar_t CLASS_NAME[]  = L"Snake Game";
-
-    WNDCLASS wc = { };
-
-    wc.lpfnWndProc   = WindowProc;
-    wc.hInstance     = hInstance;
-    wc.lpszClassName = CLASS_NAME;
-
-    RegisterClass(&wc);
-
-    // Create the window.
-
-    int size = 20;
-    Size dimensions = getOptimalSize(800, 600, size);
-
-    Snake_SetSize(size);
-    Snake_SetDimensions(dimensions.width, dimensions.height);
+    // 3. Initialize your existing Snake Game logic
+    Snake_SetSize(TILE_SIZE);
+    Snake_SetDimensions(SCREEN_WIDTH, SCREEN_HEIGHT);
     Snake_Init();
 
-    HWND hwnd = CreateWindowEx(
-            0,
-            CLASS_NAME,
-            L"Snake Game -> Score: 0",
-            WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-            CW_USEDEFAULT, CW_USEDEFAULT,
-            dimensions.width, dimensions.height,   // <-- width, height
-            NULL,
-            NULL,
-            hInstance,
-            NULL
-    );
+    int keep_running = 1;
+    SDL_Event event;
 
+    // 4. Main Game Loop (Replaces the Timer/Message loop)
+    while (keep_running) {
 
-    if (hwnd == NULL)
-    {
-        return 0;
+        // Handle Input (Replaces handleKeyEvent)
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_QUIT) {
+                keep_running = 0;
+            }
+            else if (event.type == SDL_EVENT_KEY_DOWN) {
+                switch (event.key.key) {
+                    case SDLK_UP:    Snake_SetDirection(UP);    break;
+                    case SDLK_DOWN:  Snake_SetDirection(DOWN);  break;
+                    case SDLK_LEFT:  Snake_SetDirection(LEFT);  break;
+                    case SDLK_RIGHT: Snake_SetDirection(RIGHT); break;
+                    case SDLK_ESCAPE: keep_running = 0;          break;
+                }
+            }
+        }
+
+        Snake_Main_Update(window);
+
+        SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
+        SDL_RenderClear(renderer);
+
+        Snake_Render(renderer);
+        SDL_RenderPresent(renderer);
+
+        SDL_Delay(16);
     }
 
-    background = CreateSolidBrush(RGB(128, 128, 128));
-
-    ShowWindow(hwnd, nCmdShow);
-    SetTimer(hwnd, 1, 16, updateCycle); // 16ms per tick
-
-    MSG msg = {};
-    while (GetMessage(&msg, hwnd, 0, 0) > 0)
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
+    // 5. Cleanup (Replaces Main_Dispose)
+    Snake_Dispose();
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 
     return 0;
-}
-
-
-void Main_Dispose() {
-    Snake_Dispose();
-    DeleteObject(background);
-    DeleteObject(&ps);
-}
-
-void handleKeyEvent(WPARAM wParam, int keyDown) {
-    switch (wParam)
-    {
-        case VK_UP:
-            Snake_SetDirection(UP);
-            break;
-
-        case VK_DOWN:
-            Snake_SetDirection(DOWN);
-            break;
-
-        case VK_LEFT:
-            Snake_SetDirection(LEFT);
-            break;
-
-        case VK_RIGHT:
-            Snake_SetDirection(RIGHT);
-            break;
-
-        case VK_F7:
-            if (CHEAT) {
-                Snake_Grow();
-            }
-            break;
-        case VK_ESCAPE:
-            Main_Dispose();
-            exit(0);
-    }
-}
-
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    switch (uMsg)
-    {
-        case WM_DESTROY:
-            KillTimer(hwnd, 1);        // FIX: stop timer
-            Main_Dispose();
-            PostQuitMessage(0);
-            return 0;
-
-        case WM_CLOSE:
-            DestroyWindow(hwnd);       // FIX: proper shutdown path
-            return 0;
-
-        case WM_SETCURSOR:
-            SetCursor(LoadCursor(NULL, IDC_ARROW));
-            return TRUE;
-
-        case WM_KEYDOWN:
-            handleKeyEvent(wParam, 1);
-            return 0;
-
-        case WM_ERASEBKGND:
-            return 1; // FIX: prevents flicker
-
-        case WM_PAINT:
-        {
-            HDC hdc = BeginPaint(hwnd, &ps);
-
-            FillRect(hdc, &ps.rcPaint, background);
-
-            Snake_Render(hdc);
-
-            EndPaint(hwnd, &ps);
-            return 0;
-        }
-    }
-
-    return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }

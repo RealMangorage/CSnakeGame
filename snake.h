@@ -1,6 +1,8 @@
 #ifndef SNAKE_H
 #define SNAKE_H
 
+#include "SDL3/SDL_render.h"
+
 typedef enum {
     UP,
     DOWN,
@@ -18,7 +20,7 @@ void Snake_Grow(); // Cheat/Debug
 void Snake_Init();
 void Snake_Dispose();
 
-void Snake_Main_Update(HWND hwnd);
-void Snake_Render(HDC hdc);
+void Snake_Main_Update(SDL_Window* window);
+void Snake_Render(SDL_Renderer* renderer);
 
 #endif

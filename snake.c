@@ -1,5 +1,3 @@
-#include <windows.h>
-#include <stdio.h>
 #include "snake.h"
 
 // ----------------------- STRUCTS START ----------------------- //
@@ -23,12 +21,6 @@ static int alwaysUpdateTitle         = 0;
 // ----------------------- DEBUG STATES END ----------------------- //
 
 
-// ----------------------- RENDER STATE START ----------------------- //
-HBRUSH headBrush;
-HBRUSH segmentBrush;
-HBRUSH appleBrush;
-// ----------------------- RENDER STATE END ----------------------- //
-
 // ----------------------- STATE DATA START ----------------------- //
 int ticks = 0;
 int size  = 0;
@@ -38,7 +30,6 @@ Direction direction;
 
 Snake gameSnake;
 Point gameApple;
-RECT drawingRect;
 
 Point start[] = {
         {11, 10},
@@ -62,21 +53,12 @@ void Snake_SetDebugOption(int option, int value) {
         alwaysUpdateTitle = value;
 }
 
-RECT Snake_NewGridRect(int gx, int gy, int tSize)
-{
-    return (RECT) {
-            gx * tSize,
-            gy * tSize,
-            (gx + 1) * tSize,
-            (gy + 1) * tSize
-    };
-}
-
-void Snake_UpdateGridRect(RECT* rect, int gx, int gy, int tSize) {
-    rect->left = gx * tSize;
-    rect->top = gy * tSize;
-    rect->right = (gx + 1) * tSize;
-    rect->bottom = (gy + 1) * tSize;
+void Snake_UpdateGridRect(SDL_FRect* rect, int gx, int gy, int tSize) {
+    // SDL_FRect uses (x, y, width, height)
+    rect->x = (float)(gx * tSize);
+    rect->y = (float)(gy * tSize);
+    rect->w = (float)tSize;
+    rect->h = (float)tSize;
 }
 
 int Snake_isOutOfBounds() {
@@ -114,7 +96,7 @@ void Snake_Push(Snake* s, Point newHead, int grow)
     {
         int newCap = s->maxLength + 10;
 
-        Point* temp = realloc(s->segments, sizeof(Point) * newCap);
+        Point* temp = SDL_realloc(s->segments, sizeof(Point) * newCap);
         if (!temp) return;
 
         s->segments = temp;
@@ -164,8 +146,8 @@ void Snake_GenerateApple() {
     do {
         overlapping = 0;
         // 1. Pick a random spot
-        gameApple.x = rand() % maxGridX;
-        gameApple.y = rand() % maxGridY;
+        gameApple.x = SDL_rand(32) % maxGridX;
+        gameApple.y = SDL_rand(32) % maxGridY;
 
         // 2. Make sure that spot isn't currently occupied by the snake
         for (int i = 0; i < gameSnake.currentLength; i++) {
@@ -177,11 +159,11 @@ void Snake_GenerateApple() {
     } while (overlapping); // Keep trying until we find an empty spot
 }
 
-void Snake_UpdateTitle(HWND hwnd) {
+void Snake_UpdateTitle(SDL_Window* window) {
     char title[64];
     int score = (gameSnake.currentLength - 4) * 10;
-    sprintf(title, "Snake Game - Score: %d", score);
-    SetWindowTextA(hwnd, title);
+    SDL_snprintf(title, sizeof(title), "Snake Game - Score: %d", score);
+    SDL_SetWindowTitle(window, title);
 }
 
 // ----------------------- PRIVATE FUNCS END ----------------------- //
@@ -211,11 +193,6 @@ void Snake_SetSize(int newSize) {
 }
 
 void Snake_Init() {
-    headBrush = CreateSolidBrush(RGB(255, 0, 0));
-    segmentBrush = CreateSolidBrush(RGB(0, 255, 0));
-    appleBrush = CreateSolidBrush(RGB(0,0, 255));
-    drawingRect = Snake_NewGridRect(0, 0, size);
-
     gameSnake.segments = malloc(sizeof(Point) * 10);
     gameSnake.currentLength = 0;
     gameSnake.maxLength = 1;
@@ -231,61 +208,68 @@ void Snake_SetDirection(Direction newDirection) {
     direction = newDirection;
 }
 
-void Snake_Main_Update(HWND hwnd) {
+void Snake_Main_Update(SDL_Window* window) {
     ticks++;
 
     if (ticks % 4 == 0) {
         if (Snake_isOutOfBounds() && !skipBorderCollisionChecks) {
             printf("Game Over! Hit a wall at %d, %d\n", gameSnake.segments[0].x, gameSnake.segments[0].y);
             Snake_Reset();
-            Snake_UpdateTitle(hwnd);
+            Snake_UpdateTitle(window);
             return;
         }
 
         if (Snake_isIntersecting(&gameSnake) && !skipSnakeCollisionChecks) {
             printf("Game Over! Ran into self at %d, %d\n", gameSnake.segments[0].x, gameSnake.segments[0].y);
             Snake_Reset();
-            Snake_UpdateTitle(hwnd);
+            Snake_UpdateTitle(window);
             return;
         }
 
         if (Snake_isPointsEqual(gameSnake.segments[0], gameApple)) {
             Snake_GenerateApple();
             Snake_Update(&gameSnake, direction, 1);
-            Snake_UpdateTitle(hwnd);
+            Snake_UpdateTitle(window);
         } else {
             Snake_Update(&gameSnake, direction, 0);
         }
 
 
         if (alwaysUpdateTitle) {
-            Snake_UpdateTitle(hwnd);
+            Snake_UpdateTitle(window);
         }
     }
 
 }
 
-void Snake_Render(HDC hdc) {
+void Snake_Render(SDL_Renderer* renderer) {
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+
+    SDL_FRect segmentRect;
+
     int head = 0;
 
     for (int i = 0; i < gameSnake.currentLength; i++) {
+        Snake_UpdateGridRect(&segmentRect, gameSnake.segments[i].x, gameSnake.segments[i].y, size);
 
-        Snake_UpdateGridRect(&drawingRect, gameSnake.segments[i].x, gameSnake.segments[i].y, size);
-        FillRect(hdc, &drawingRect, head ? headBrush : segmentBrush);
+        SDL_RenderFillRect(renderer, &segmentRect);
 
-        if (!head)
+        if (!head) {
             head = 1;
+            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+        }
     }
 
-    Snake_UpdateGridRect(&drawingRect,gameApple.x, gameApple.y, size);
-    FillRect(hdc, &drawingRect, appleBrush);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+    Snake_UpdateGridRect(&segmentRect, gameApple.x, gameApple.y, size);
+    SDL_RenderFillRect(renderer, &segmentRect);
 }
 
 void Snake_Free(Snake* s) {
     if (!s) return;
 
     if (s->segments != NULL) {
-        free(s->segments);
+        SDL_free(s->segments);
         s->segments = NULL;
     }
 
@@ -296,22 +280,6 @@ void Snake_Free(Snake* s) {
 void Snake_Dispose() {
     // Free snake heap memory
     Snake_Free(&gameSnake);
-
-    // Free WinAPI GDI objects
-    if (headBrush) {
-        DeleteObject(headBrush);
-        headBrush = NULL;
-    }
-
-    if (segmentBrush) {
-        DeleteObject(segmentBrush);
-        segmentBrush = NULL;
-    }
-
-    if (appleBrush) {
-        DeleteObject(appleBrush);
-        appleBrush = NULL;
-    }
 }
 
 // ----------------------- API FUNCS END ----------------------- //
