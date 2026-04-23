@@ -29,6 +29,7 @@ endif()
 
 # Windows-specific: Copy the SDL3 DLL to the output folder for local testing
 if(WIN32)
+    set_target_properties(CSnakeGame PROPERTIES WIN32_EXECUTABLE TRUE)
     add_custom_command(TARGET CSnakeGame POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:SDL3::SDL3>"

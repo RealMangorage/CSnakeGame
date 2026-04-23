@@ -1,7 +1,7 @@
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
 #include "snake.h"
 
-// Constants based on your previous Win32 logic
 #define TILE_SIZE 20
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
@@ -13,19 +13,18 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // 2. Create Window & Renderer (Replaces CreateWindowEx)
     SDL_Window* window = NULL;
     SDL_Renderer* renderer = NULL;
 
     if (!SDL_CreateWindowAndRenderer("Snake Game -> Score: 0",
                                      SCREEN_WIDTH, SCREEN_HEIGHT,
-                                     0, &window, &renderer)) {
+                                     0, &window, &renderer
+                                     )) {
         SDL_Log("Window/Renderer error: %s", SDL_GetError());
         SDL_Quit();
         return 1;
     }
 
-    // 3. Initialize your existing Snake Game logic
     Snake_SetSize(TILE_SIZE);
     Snake_SetDimensions(SCREEN_WIDTH, SCREEN_HEIGHT);
     Snake_Init();
@@ -33,10 +32,8 @@ int main(int argc, char* argv[]) {
     int keep_running = 1;
     SDL_Event event;
 
-    // 4. Main Game Loop (Replaces the Timer/Message loop)
     while (keep_running) {
 
-        // Handle Input (Replaces handleKeyEvent)
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
                 keep_running = 0;
@@ -63,7 +60,6 @@ int main(int argc, char* argv[]) {
         SDL_Delay(16);
     }
 
-    // 5. Cleanup (Replaces Main_Dispose)
     Snake_Dispose();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
