@@ -193,7 +193,7 @@ void Snake_SetSize(int newSize) {
 }
 
 void Snake_Init() {
-    gameSnake.segments = malloc(sizeof(Point) * 10);
+    gameSnake.segments = SDL_malloc(sizeof(Point) * 10);
     gameSnake.currentLength = 0;
     gameSnake.maxLength = 1;
 
@@ -213,14 +213,14 @@ void Snake_Main_Update(SDL_Window* window) {
 
     if (ticks % 4 == 0) {
         if (Snake_isOutOfBounds() && !skipBorderCollisionChecks) {
-            printf("Game Over! Hit a wall at %d, %d\n", gameSnake.segments[0].x, gameSnake.segments[0].y);
+//            printf("Game Over! Hit a wall at %d, %d\n", gameSnake.segments[0].x, gameSnake.segments[0].y);
             Snake_Reset();
             Snake_UpdateTitle(window);
             return;
         }
 
         if (Snake_isIntersecting(&gameSnake) && !skipSnakeCollisionChecks) {
-            printf("Game Over! Ran into self at %d, %d\n", gameSnake.segments[0].x, gameSnake.segments[0].y);
+//            printf("Game Over! Ran into self at %d, %d\n", gameSnake.segments[0].x, gameSnake.segments[0].y);
             Snake_Reset();
             Snake_UpdateTitle(window);
             return;
