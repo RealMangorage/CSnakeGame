@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # This runs two parallel builds: one for Windows, one for Linux
+        # Runs parallel builds for Windows and Linux
         os: [ubuntu-latest, windows-latest]
 
     steps:
@@ -23,12 +23,24 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          # These are standard build tools and X11/Wayland libs for SDL3
-          sudo apt-get install -y build-essential libx11-dev libxcursor-dev libxinerama-dev libxrandr-dev libxi-dev libxss-dev libgl1-mesa-dev libdbus-1-dev libudev-dev libgles2-mesa-dev libwayland-dev liblibxkbcommon-dev
+          sudo apt-get install -y build-essential \
+            libx11-dev libxcursor-dev libxinerama-dev libxrandr-dev \
+            libxi-dev libxss-dev libgl1-mesa-dev libdbus-1-dev \
+            libudev-dev libgles2-mesa-dev libwayland-dev libxkbcommon-dev
 
       - name: Configure CMake
-        # We use -B build to put build files in a separate 'build' folder
+        # Creates the build directory and configures the project
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build Project
+        # Compiles the project using the configuration generated above
         run: cmake --build build --config Release
+
+      - name: Upload Build Artifacts
+        # This saves the .exe (Windows) or binary (Linux) so you can download it
+        uses: actions/upload-artifact@v4
+        with:
+          name: snake-game-${{ matrix.os }}
+          path: |
+            build/CSnakeGame*
+            build/*.dll
