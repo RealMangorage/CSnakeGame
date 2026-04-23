@@ -40,10 +40,10 @@ int main(int argc, char* argv[]) {
             }
             else if (event.type == SDL_EVENT_KEY_DOWN) {
                 switch (event.key.key) {
-                    case SDLK_UP:    Snake_SetDirection(UP);    break;
-                    case SDLK_DOWN:  Snake_SetDirection(DOWN);  break;
-                    case SDLK_LEFT:  Snake_SetDirection(LEFT);  break;
-                    case SDLK_RIGHT: Snake_SetDirection(RIGHT); break;
+                    case SDLK_UP:     Snake_SetDirection(UP);    break;
+                    case SDLK_DOWN:   Snake_SetDirection(DOWN);  break;
+                    case SDLK_LEFT:   Snake_SetDirection(LEFT);  break;
+                    case SDLK_RIGHT:  Snake_SetDirection(RIGHT); break;
                     case SDLK_ESCAPE: keep_running = 0;          break;
                 }
             }

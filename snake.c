@@ -27,6 +27,7 @@ int size  = 0;
 int width, height;
 
 Direction direction;
+SDL_FRect segmentRect;
 
 Snake gameSnake;
 Point gameApple;
@@ -244,8 +245,6 @@ void Snake_Main_Update(SDL_Window* window) {
 
 void Snake_Render(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-
-    SDL_FRect segmentRect;
 
     int head = 0;
 
