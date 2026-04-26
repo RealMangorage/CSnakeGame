@@ -1,5 +1,8 @@
 {
   "name": "csnakegame",
   "version-string": "3.4.4",
-  "dependencies": [ "sdl3" ]
+  "dependencies": [
+    "sdl3",
+    "sdl3-mixer"
+  ]
 }

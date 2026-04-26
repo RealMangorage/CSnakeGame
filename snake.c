@@ -1,4 +1,10 @@
 #include "snake.h"
+#include "food.h"
+#include "move.h"
+#include "gameover.h"
+#include "music.h"
+#include "SoundPlayer.h"
+
 
 // ----------------------- STRUCTS START ----------------------- //
 typedef struct {
@@ -38,6 +44,11 @@ Point start[] = {
         {13, 10},
         {14, 10}
 };
+
+SoundAsset* soundFood;
+SoundAsset* soundMove;
+SoundAsset* soundGameOver;
+SoundAsset* soundMusic;
 
 // ----------------------- STATE DATA END ----------------------- //
 
@@ -198,6 +209,15 @@ void Snake_Init() {
     gameSnake.currentLength = 0;
     gameSnake.maxLength = 1;
 
+    SoundPlayer_Init();
+
+    soundFood = SoundPlayer_LoadFromMem(food_mp3, food_mp3_len);
+    soundGameOver = SoundPlayer_LoadFromMem(gameover_mp3, gameover_mp3_len);
+    soundMove = SoundPlayer_LoadFromMem(gameover_mp3, gameover_mp3_len);
+    soundMusic = SoundPlayer_LoadFromMem(music_mp3, music_mp3_len);
+
+//    SoundPlayer_PlayLoop(soundMusic);
+
     Snake_Reset();
 }
 
@@ -212,16 +232,21 @@ void Snake_SetDirection(Direction newDirection) {
 void Snake_Main_Update(SDL_Window* window) {
     ticks++;
 
+
+    if (SoundPlayer_IsPlaying(soundGameOver)) {
+        SDL_Log("Playing!");
+    }
+
     if (ticks % 4 == 0) {
         if (Snake_isOutOfBounds() && !skipBorderCollisionChecks) {
-//            printf("Game Over! Hit a wall at %d, %d\n", gameSnake.segments[0].x, gameSnake.segments[0].y);
+            SoundPlayer_Play(soundGameOver);
             Snake_Reset();
             Snake_UpdateTitle(window);
             return;
         }
 
         if (Snake_isIntersecting(&gameSnake) && !skipSnakeCollisionChecks) {
-//            printf("Game Over! Ran into self at %d, %d\n", gameSnake.segments[0].x, gameSnake.segments[0].y);
+            SoundPlayer_Play(soundGameOver);
             Snake_Reset();
             Snake_UpdateTitle(window);
             return;
@@ -229,6 +254,7 @@ void Snake_Main_Update(SDL_Window* window) {
 
         if (Snake_isPointsEqual(gameSnake.segments[0], gameApple)) {
             Snake_GenerateApple();
+            SoundPlayer_Play(soundFood);
             Snake_Update(&gameSnake, direction, 1);
             Snake_UpdateTitle(window);
         } else {
@@ -279,6 +305,11 @@ void Snake_Free(Snake* s) {
 void Snake_Dispose() {
     // Free snake heap memory
     Snake_Free(&gameSnake);
+    SoundPlayer_FreeAsset(soundMusic);
+    SoundPlayer_FreeAsset(soundMove);
+    SoundPlayer_FreeAsset(soundGameOver);
+    SoundPlayer_FreeAsset(soundFood);
+    SoundPlayer_Quit();
 }
 
 // ----------------------- API FUNCS END ----------------------- //
